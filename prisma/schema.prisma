@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url      = env("DATABASE_URL")
+}
+
+/* =====================
+   NEWS
+   ===================== */
+model News {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  imageUrl    String?
+  isFeatured  Boolean  @default(false)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/* =====================
+   USERS & AUTH
+   ===================== */
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(USER)
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets   Ticket[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+/* =====================
+   MATCHES
+   ===================== */
+model Match {
+  id            String   @id @default(uuid())
+  homeTeam      String
+  awayTeam      String
+  homeScore     Int?
+  awayScore     Int?
+  matchDate     DateTime
+  competition   String
+  venue         String?
+  status        MatchStatus @default(SCHEDULED)
+
+  ticketPrice   Float
+  totalTickets  Int
+  ticketsSold   Int        @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tickets       Ticket[]
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+}
+
+/* =====================
+   TICKETS
+   ===================== */
+model Ticket {
+  id        String   @id @default(uuid())
+  userId    String
+  matchId   String
+  quantity  Int      @default(1)
+  totalPaid Float
+  status    TicketStatus @default(PAID)
+
+  createdAt DateTime @default(now())
+
+  user      User  @relation(fields: [userId], references: [id])
+  match     Match @relation(fields: [matchId], references: [id])
+
+  @@index([userId])
+  @@index([matchId])
+}
+
+enum TicketStatus {
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+/* =====================
+   PLAYERS
+   ===================== */
+model Player {
+  id          String   @id @default(uuid())
+  firstName   String
+  lastName    String
+  position    PlayerPosition
+  number      Int
+  nationality String?
+  dateOfBirth DateTime?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum PlayerPosition {
+  GOALKEEPER
+  DEFENDER
+  MIDFIELDER
+  FORWARD
+}
+
+/* =====================
+   MANAGEMENT
+   ===================== */
+model Management {
+  id        String   @id @default(uuid())
+  fullName  String
+  role      ManagementRole
+  imageUrl  String?
+  bio       String?
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ManagementRole {
+  HEAD_COACH
+  ASSISTANT_COACH
+  FITNESS_COACH
+  DIRECTOR
+  STAFF
+}
+
+/* =====================
+   SPONSORS
+   ===================== */
+model Sponsor {
+  id        String   @id @default(uuid())
+  name      String
+  logoUrl   String
+  website   String?
+  tier      SponsorTier
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum SponsorTier {
+  MAIN
+  GOLD
+  SILVER
+  PARTNER
+}
+
+/* =====================
+   LEAGUE TABLE / STANDINGS
+   ===================== */
+model TeamStanding {
+  id             String   @id @default(uuid())
+  teamName       String   @unique
+  played         Int      @default(0)
+  wins           Int      @default(0)
+  draws          Int      @default(0)
+  losses         Int      @default(0)
+  goalsFor       Int      @default(0)
+  goalsAgainst   Int      @default(0)
+  points         Int      @default(0)
+  goalDifference Int      @default(0)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+/* =====================
+   CONTACT FORM
+   ===================== */
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+/* =====================
+   HISTORY & ACHIEVEMENTS
+   ===================== */
+model History {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  year        Int?
+  imageUrl    String?
+  type        HistoryType @default(ACHIEVEMENT)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum HistoryType {
+  TROPHY
+  ACHIEVEMENT
+  MILESTONE
+}

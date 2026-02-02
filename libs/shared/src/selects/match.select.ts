@@ -1,0 +1,15 @@
+export const MatchSelect = {
+  id: true,
+  homeTeam: true,
+  awayTeam: true,
+  matchDate: true,
+  competition: true,
+  venue: true,
+  status: true,
+  homeScore: true,
+  awayScore: true,
+  ticketPrice: true,
+  totalTickets: true,
+  createdAt: true,
+  updatedAt: true,
+};
