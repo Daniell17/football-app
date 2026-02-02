@@ -1,28 +1,46 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { HashingService, TokenService, MfaService, PasswordBreachService } from '@app/shared';
 import { UsersService } from '../users/users.service';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
-    private jwtService: JwtService,
+    private hashingService: HashingService,
+    private tokenService: TokenService,
+    private mfaService: MfaService,
+    private passwordBreachService: PasswordBreachService,
   ) {}
+
+  async generateMfaSecret(userId: string, email: string) {
+    return this.mfaService.generateSecret(userId, email);
+  }
+
+  async verifyMfa(userId: string, token: string) {
+    const verified = await this.mfaService.verifyToken(userId, token);
+    if (!verified) {
+      throw new UnauthorizedException('Invalid MFA token');
+    }
+    return { success: true };
+  }
+
+  async logout(userId: string) {
+    return this.tokenService.revokeRefreshToken(userId);
+  }
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user;
+    if (user && (await this.hashingService.compare(pass, user.password))) {
+      const { password, refreshToken, ...result } = user;
       return result;
     }
     return null;
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const tokens = await this.tokenService.generateTokens(user);
     return {
-      access_token: this.jwtService.sign(payload),
+      ...tokens,
       user: {
         id: user.id,
         email: user.email,
@@ -33,8 +51,13 @@ export class AuthService {
     };
   }
 
+  async refresh(refreshToken: string) {
+    return this.tokenService.refreshTokens(refreshToken);
+  }
+
   async register(createUserDto: any) {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    await this.passwordBreachService.checkPassword(createUserDto.password);
+    const hashedPassword = await this.hashingService.hash(createUserDto.password);
     return this.usersService.create({
       ...createUserDto,
       password: hashedPassword,

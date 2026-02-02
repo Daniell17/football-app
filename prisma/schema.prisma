@@ -24,18 +24,58 @@ model News {
    USERS & AUTH
    ===================== */
 model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  password        String
+  firstName       String
+  lastName        String
+  role            UserRole @default(USER)
+  isActive        Boolean  @default(true)
+  
+  // Security Fields
+  refreshToken     String? // Hashed
+  tokenVersion     Int      @default(0)
+  mfaEnabled       Boolean  @default(false)
+  mfaSecret        String?
+  lastLoginAt      DateTime?
+  failedLoginCount Int      @default(0)
+  lockoutUntil     DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tickets          Ticket[]
+  sessions         Session[]
+  auditLogs        AuditLog[]
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  userAgent    String?
+  ipAddress    String?
+  lastActiveAt DateTime @default(now())
+  isActive     Boolean  @default(true)
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  role      UserRole @default(USER)
-  isActive  Boolean  @default(true)
-
+  userId    String?
+  action    String
+  resource  String?
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  tickets   Ticket[]
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
 }
 
 enum UserRole {

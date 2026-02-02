@@ -3,11 +3,13 @@ import { PlayersService } from './players.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard, RolesGuard, Roles } from '@app/shared';
+import { UserRole } from '@prisma/client';
 
 @ApiTags('admin-players')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@Roles(UserRole.ADMIN)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('admin/players')
 export class PlayersController {
   constructor(private readonly playersService: PlayersService) {}

@@ -3,7 +3,7 @@ import { StandingsService } from './standings.service';
 import { CreateStandingDto } from './dto/create-standing.dto';
 import { UpdateStandingDto } from './dto/update-standing.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@app/shared';
 
 @ApiTags('admin-standings')
 @ApiBearerAuth()

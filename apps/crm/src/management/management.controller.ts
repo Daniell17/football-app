@@ -3,7 +3,7 @@ import { ManagementService } from './management.service';
 import { CreateManagementDto } from './dto/create-management.dto';
 import { UpdateManagementDto } from './dto/update-management.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@app/shared';
 
 @ApiTags('admin-management')
 @ApiBearerAuth()

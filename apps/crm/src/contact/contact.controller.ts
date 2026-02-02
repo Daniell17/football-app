@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Patch, Delete, UseGuards } from '@nestjs/common';
 import { ContactService } from './contact.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@app/shared';
 
 @ApiTags('admin-contact')
 @ApiBearerAuth()
