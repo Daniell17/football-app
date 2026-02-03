@@ -22,3 +22,5 @@ export * from './security/services/password-breach.service';
 export * from './casl/casl-ability.factory';
 export * from './casl/check-policies.decorator';
 export * from './casl/policies.guard';
+export * from './security/guards/auth-rate-limit.guard';
+export * from './services/mail.service';

@@ -8,6 +8,7 @@ import { PrismaClientExceptionFilter } from '@app/shared';
 import helmet from 'helmet';
 import { json } from 'express';
 import rateLimit from 'express-rate-limit';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -48,8 +49,8 @@ async function bootstrap() {
     transform: true,
   }));
 
-  const { httpAdapter } = app.get(HttpAdapterHost);
-  app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
+  const httpAdapterHost = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost)); // Register global filter
 
   const config = new DocumentBuilder()
     .setTitle('Football Club CRM API')

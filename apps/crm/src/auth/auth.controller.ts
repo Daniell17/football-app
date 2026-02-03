@@ -1,7 +1,7 @@
-import { Controller, Post, Body, UseGuards, Get, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, UnauthorizedException, Ip, Headers as IncomingHeaders } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard, RolesGuard, Roles, GetUser, VerifyMfaDto } from '@app/shared';
+import { JwtAuthGuard, RolesGuard, Roles, GetUser, VerifyMfaDto, AuthRateLimitGuard } from '@app/shared';
 import { UserRole } from '@prisma/client';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
@@ -13,13 +13,14 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @UseGuards(AuthRateLimitGuard)
   @ApiOperation({ summary: 'Login and get JWT token' })
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto, @Ip() ip: string, @IncomingHeaders('user-agent') ua: string) {
     const user = await this.authService.validateUser(loginDto.email, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return this.authService.login(user);
+    return this.authService.login(user, ip, ua);
   }
 
   @Post('refresh')
@@ -33,6 +34,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout and revoke refresh token' })
   async logout(@GetUser() user: any) {
+    // Ideally we might want to revoke only the current session (user.sid)
+    // But AuthService.logout currently revokes ALL sessions.
     return this.authService.logout(user.id);
   }
 
@@ -67,5 +70,19 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   getProfile(@GetUser() user: any) {
     return user;
+  }
+
+  @Post('forgot-password')
+  @UseGuards(AuthRateLimitGuard)
+  @ApiOperation({ summary: 'Request password reset' })
+  async forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  @UseGuards(AuthRateLimitGuard)
+  @ApiOperation({ summary: 'Reset password with token' })
+  async resetPassword(@Body() body: any) { // TODO: Create ResetPasswordDto
+    return this.authService.resetPassword(body.token, body.password);
   }
 }

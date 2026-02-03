@@ -41,6 +41,10 @@ model User {
   failedLoginCount Int      @default(0)
   lockoutUntil     DateTime?
 
+  // Password Reset
+  resetToken       String?  @unique
+  resetExpires     DateTime?
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -54,8 +58,11 @@ model Session {
   userId       String
   userAgent    String?
   ipAddress    String?
-  lastActiveAt DateTime @default(now())
+  refreshHash  String   // For Refresh Token Rotation
+  lastActiveAt DateTime @default(now()) @updatedAt
+  expiresAt    DateTime
   isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
   
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

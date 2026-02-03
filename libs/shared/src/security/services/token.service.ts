@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HashingService } from './hashing.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class TokenService {
@@ -11,68 +12,123 @@ export class TokenService {
     private hashingService: HashingService,
   ) {}
 
-  async generateTokens(user: any) {
-    const payload = { email: user.email, sub: user.id, role: user.role, version: user.tokenVersion };
+  async generateTokens(user: any, ip?: string, ua?: string) {
+    // 1. Create a session first to get the ID (or generate ID manually)
+    const sessionId = crypto.randomUUID();
+    const refreshToken = crypto.randomBytes(32).toString('hex');
+    const refreshHash = await this.hashingService.hash(refreshToken);
     
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        expiresIn: '15m',
-      }),
-      this.jwtService.signAsync(payload, {
-        expiresIn: '7d',
-        secret: process.env.JWT_REFRESH_SECRET || 'refreshSecretKey',
-      }),
-    ]);
+    // 2. Create Access Token with 'sid' claim
+    const payload = { 
+      email: user.email, 
+      sub: user.id, 
+      role: user.role, 
+      sid: sessionId 
+    };
+    
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '15m',
+    });
 
-    const hashedRefreshToken = await this.hashingService.hash(refreshToken);
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken: hashedRefreshToken },
+    // 3. Store Session in DB
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+
+    await this.prisma.session.create({
+      data: {
+        id: sessionId,
+        userId: user.id,
+        refreshHash,
+        ipAddress: ip,
+        userAgent: ua,
+        expiresAt,
+      },
     });
 
     return {
       accessToken,
-      refreshToken,
+      refreshToken: `${sessionId}.${refreshToken}`, // Return combined ID and Token
     };
   }
 
-  async refreshTokens(refreshToken: string) {
+  async refreshTokens(refreshTokenString: string) {
     try {
-      const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || 'refreshSecretKey',
-      });
-
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-      });
-
-      if (!user || !user.refreshToken) {
-        throw new UnauthorizedException('Access Denied');
+      if (!refreshTokenString || !refreshTokenString.includes('.')) {
+        throw new UnauthorizedException('Invalid refresh token format');
       }
 
-      const isMatch = await this.hashingService.compare(refreshToken, user.refreshToken);
+      const [sessionId, token] = refreshTokenString.split('.');
+      
+      const session = await this.prisma.session.findUnique({
+        where: { id: sessionId },
+        include: { user: true },
+      });
+
+      if (!session) {
+        throw new UnauthorizedException('Session not found');
+      }
+
+      if (new Date() > session.expiresAt) {
+        await this.prisma.session.delete({ where: { id: sessionId } });
+        throw new UnauthorizedException('Session expired');
+      }
+
+      const isMatch = await this.hashingService.compare(token, session.refreshHash);
       if (!isMatch) {
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: { refreshToken: null, tokenVersion: { increment: 1 } },
-        });
-        throw new UnauthorizedException('Access Denied - Token potentially stolen');
+        // Token Reuse / Theft Detection
+        // Revoke all sessions for this user as a security measure
+        await this.prisma.session.deleteMany({ where: { userId: session.userId }});
+        throw new UnauthorizedException('Refresh token misuse detected');
       }
 
-      if (user.tokenVersion !== payload.version) {
-        throw new UnauthorizedException('Token version mismatch');
-      }
+      // Rotate Token
+      const newRefreshToken = crypto.randomBytes(32).toString('hex');
+      const newHash = await this.hashingService.hash(newRefreshToken);
+      
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
 
-      return this.generateTokens(user);
+      await this.prisma.session.update({
+        where: { id: sessionId },
+        data: {
+          refreshHash: newHash,
+          lastActiveAt: new Date(),
+          expiresAt,
+        },
+      });
+
+      // Generate new Access Token
+      const payload = { 
+        email: session.user.email, 
+        sub: session.user.id, 
+        role: session.user.role, 
+        sid: sessionId 
+      };
+
+      const accessToken = await this.jwtService.signAsync(payload, {
+        expiresIn: '15m',
+      });
+
+      return {
+        accessToken,
+        refreshToken: `${sessionId}.${newRefreshToken}`,
+      };
     } catch (e) {
+      if (e instanceof UnauthorizedException) throw e;
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
   async revokeRefreshToken(userId: string) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { refreshToken: null },
+    // Revoke all sessions for the user
+    await this.prisma.session.deleteMany({
+      where: { userId },
+    });
+  }
+  
+  async revokeSession(sessionId: string) {
+    await this.prisma.session.delete({
+      where: { id: sessionId },
     });
   }
 }
