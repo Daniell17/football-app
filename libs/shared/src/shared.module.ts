@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { SharedService } from './shared.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { HashingService } from './security/services/hashing.service';
@@ -11,7 +12,13 @@ import { RateLimiterService } from './security/services/rate-limiter.service';
 
 @Global()
 @Module({
-  imports: [PrismaModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    PrismaModule,
+  ],
   providers: [
     SharedService,
     HashingService,
