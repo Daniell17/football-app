@@ -11,12 +11,12 @@ There are two separate applications:
 ## � Connection Details
 
 ### 1. Web App (Public)
-*   **Base URL**: `http://localhost:3000/api`
+*   **Base URL**: `http://localhost:8080/api`
 *   **Audience**: General Users (Fans)
 *   **Key Features**: Login/Register, View Matches, Buy Tickets, View Profile.
 
 ### 2. CRM App (Admin)
-*   **Base URL**: `http://localhost:3001/api`
+*   **Base URL**: `http://localhost:9090/api`
 *   **Audience**: Admins, Staff
 *   **Key Features**: User Management, Match Scheduling, Content Management (News), System Config.
 
