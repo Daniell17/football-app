@@ -8,9 +8,24 @@ export class MatchesService {
   constructor(private prisma: PrismaService) {}
 
   async create(createMatchDto: CreateMatchDto) {
-    return this.prisma.match.create({
-      data: createMatchDto,
+    const { createNews, newsDescription, newsImage, ...matchData } = createMatchDto;
+
+    const match = await this.prisma.match.create({
+      data: matchData,
     });
+
+    if (createNews) {
+      await this.prisma.news.create({
+        data: {
+          title: `New Match: ${match.homeTeam} vs ${match.awayTeam}`,
+          content: newsDescription || '',
+          imageUrl: newsImage,
+          isFeatured: true,
+        },
+      });
+    }
+
+    return match;
   }
 
   async findAll() {
@@ -33,9 +48,11 @@ export class MatchesService {
 
   async update(id: string, updateMatchDto: UpdateMatchDto) {
     await this.findOne(id);
+    const { createNews, newsDescription, newsImage, ...updateData } = updateMatchDto;
+    
     return this.prisma.match.update({
       where: { id },
-      data: updateMatchDto,
+      data: updateData,
     });
   }
 

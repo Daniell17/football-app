@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, IsDateString, IsNumber, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, IsDateString, IsNumber, IsEnum, IsBoolean, ValidateIf } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { MatchStatus } from '@prisma/client';
 
@@ -52,4 +52,21 @@ export class CreateMatchDto {
   @IsOptional()
   @IsInt()
   awayScore?: number;
+
+  @ApiProperty({ description: 'Whether to create a news article for this match', required: false })
+  @IsOptional()
+  @IsBoolean()
+  createNews?: boolean;
+
+  @ApiProperty({ description: 'Description for the news article', required: false })
+  @ValidateIf(o => o.createNews === true)
+  @IsString()
+  @IsNotEmpty()
+  newsDescription?: string;
+
+  @ApiProperty({ description: 'Image URL for the news article', required: false })
+  @ValidateIf(o => o.createNews === true)
+  @IsString()
+  @IsNotEmpty()
+  newsImage?: string;
 }

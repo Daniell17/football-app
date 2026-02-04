@@ -52,6 +52,9 @@ async function bootstrap() {
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost)); // Register global filter
 
+  const { HttpLoggingInterceptor } = await import('@app/shared');
+  app.useGlobalInterceptors(new HttpLoggingInterceptor());
+
   const config = new DocumentBuilder()
     .setTitle('Football Club CRM API')
     .setDescription('Administrative API for management and CRUD operations')

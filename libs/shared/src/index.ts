@@ -24,3 +24,4 @@ export * from './casl/check-policies.decorator';
 export * from './casl/policies.guard';
 export * from './security/guards/auth-rate-limit.guard';
 export * from './services/mail.service';
+export * from './interceptors/http-logging.interceptor';
