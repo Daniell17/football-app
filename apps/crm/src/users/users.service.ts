@@ -12,6 +12,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: createUserDto,
+      select: UserSelect,
     });
   }
 
@@ -65,6 +66,7 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id },
       data: updateUserDto,
+      select: UserSelect,
     });
   }
 

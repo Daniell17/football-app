@@ -4,6 +4,7 @@ export const UserSelect = {
   firstName: true,
   lastName: true,
   role: true,
+  isActive: true,
   createdAt: true,
   updatedAt: true,
 };

@@ -1,4 +1,5 @@
 import { IsEmail, IsString, IsNotEmpty, IsOptional, IsBoolean, IsEnum, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
@@ -31,6 +32,7 @@ export class CreateUserDto {
 
   @ApiProperty({ description: 'Whether active', default: true })
   @IsOptional()
+  @Type(() => Boolean)
   @IsBoolean()
   isActive?: boolean;
 }

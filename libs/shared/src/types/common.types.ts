@@ -22,4 +22,4 @@ export interface UserWithoutPassword {
   updatedAt: Date;
 }
 
-export type SafeUser = Omit<UserWithoutPassword, 'isActive' | 'mfaEnabled' | 'createdAt' | 'updatedAt'>;
+export type SafeUser = Omit<UserWithoutPassword, 'mfaEnabled' | 'createdAt' | 'updatedAt'>;
