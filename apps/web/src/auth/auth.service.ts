@@ -1,4 +1,5 @@
 import { HashingService, TokenService, PrismaService, MfaService, PasswordBreachService, MailService } from '@app/shared';
+import { User } from '@prisma/client';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -26,7 +27,7 @@ export class AuthService {
     return { success: true };
   }
 
-  async validateUser(email: string, pass: string): Promise<any> {
+  async validateUser(email: string, pass: string): Promise<Omit<User, 'password' | 'refreshToken'> | null> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (user && (await this.hashingService.compare(pass, user.password))) {
       const { password, refreshToken, ...result } = user;
@@ -35,7 +36,7 @@ export class AuthService {
     return null;
   }
 
-  async login(user: any, ip?: string, ua?: string) {
+  async login(user: User | Omit<User, 'password' | 'refreshToken'>, ip?: string, ua?: string) {
     const tokens = await this.tokenService.generateTokens(user, ip, ua);
     return {
       ...tokens,

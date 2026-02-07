@@ -1,6 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { NewsFilterDto } from './dto/news-filter.dto';
 
 @ApiTags('news')
 @Controller('news')
@@ -8,9 +9,9 @@ export class NewsController {
   constructor(private readonly newsService: NewsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all published news articles' })
-  findAll() {
-    return this.newsService.findAll();
+  @ApiOperation({ summary: 'Get all published news articles with filtering and pagination' })
+  findAll(@Query() query: NewsFilterDto) {
+    return this.newsService.findAll(query);
   }
 
   @Get('featured')

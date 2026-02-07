@@ -2,10 +2,11 @@ import { Controller, Post, Body, UseGuards, Get, UnauthorizedException, Ip, Head
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard, RolesGuard, Roles, GetUser, VerifyMfaDto, AuthRateLimitGuard } from '@app/shared';
-import { UserRole } from '@prisma/client';
+import { UserRole, User } from '@prisma/client';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -33,7 +34,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout and revoke refresh token' })
-  async logout(@GetUser() user: any) {
+  async logout(@GetUser() user: User) {
     // Ideally we might want to revoke only the current session (user.sid)
     // But AuthService.logout currently revokes ALL sessions.
     return this.authService.logout(user.id);
@@ -52,7 +53,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate MFA secret and QR code' })
-  async setupMfa(@GetUser() user: any) {
+  async setupMfa(@GetUser() user: User) {
     return this.authService.generateMfaSecret(user.id, user.email);
   }
 
@@ -60,7 +61,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Verify MFA token and enable MFA' })
-  async verifyMfa(@GetUser() user: any, @Body() verifyMfaDto: VerifyMfaDto) {
+  async verifyMfa(@GetUser() user: User, @Body() verifyMfaDto: VerifyMfaDto) {
     return this.authService.verifyMfa(user.id, verifyMfaDto.token);
   }
 
@@ -68,7 +69,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  getProfile(@GetUser() user: any) {
+  getProfile(@GetUser() user: User) {
     return user;
   }
 
@@ -82,7 +83,7 @@ export class AuthController {
   @Post('reset-password')
   @UseGuards(AuthRateLimitGuard)
   @ApiOperation({ summary: 'Reset password with token' })
-  async resetPassword(@Body() body: any) { // TODO: Create ResetPasswordDto
+  async resetPassword(@Body() body: ResetPasswordDto) { 
     return this.authService.resetPassword(body.token, body.password);
   }
 }

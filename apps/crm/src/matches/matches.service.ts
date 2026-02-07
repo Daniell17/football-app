@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService, MatchSelect } from '@app/shared';
+import { PrismaService, MatchSelect, PaginatedResponse, buildPrismaQuery, getPaginationMeta } from '@app/shared';
+import { Prisma, Match } from '@prisma/client';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
+import { MatchFilterDto } from './dto/match-filter.dto';
 
 @Injectable()
 export class MatchesService {
@@ -28,11 +30,38 @@ export class MatchesService {
     return match;
   }
 
-  async findAll() {
-    return this.prisma.match.findMany({
-      select: MatchSelect,
-      orderBy: { matchDate: 'desc' },
-    });
+  async findAll(query: MatchFilterDto): Promise<PaginatedResponse<Match>> {
+    const { status, fromDate, toDate, competition, ...paginationQuery } = query;
+
+    // Build filters
+    const filters: Prisma.MatchWhereInput = {};
+    if (status) filters.status = status;
+    if (competition) filters.competition = { contains: competition, mode: 'insensitive' };
+    
+    if (fromDate || toDate) {
+      filters.matchDate = {};
+      if (fromDate) filters.matchDate.gte = new Date(fromDate);
+      if (toDate) filters.matchDate.lte = new Date(toDate);
+    }
+
+    const prismaQuery = buildPrismaQuery(
+      paginationQuery,
+      ['homeTeam', 'awayTeam', 'venue', 'competition'], // Searchable fields
+      filters
+    );
+
+    const [data, total] = await Promise.all([
+      this.prisma.match.findMany({
+        ...prismaQuery,
+        select: MatchSelect,
+      }),
+      this.prisma.match.count({ where: prismaQuery.where }),
+    ]);
+
+    return {
+      data,
+      meta: getPaginationMeta(total, query.page || 1, query.limit || 10),
+    };
   }
 
   async findOne(id: string) {

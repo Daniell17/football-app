@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HashingService } from './hashing.service';
 import * as crypto from 'crypto';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class TokenService {
@@ -12,7 +13,7 @@ export class TokenService {
     private hashingService: HashingService,
   ) {}
 
-  async generateTokens(user: any, ip?: string, ua?: string) {
+  async generateTokens(user: Pick<User, 'id' | 'email' | 'role'>, ip?: string, ua?: string) {
     // 1. Create a session first to get the ID (or generate ID manually)
     const sessionId = crypto.randomUUID();
     const refreshToken = crypto.randomBytes(32).toString('hex');

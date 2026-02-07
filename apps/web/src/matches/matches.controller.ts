@@ -1,6 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { MatchFilterDto } from './dto/match-filter.dto';
 
 @ApiTags('matches')
 @Controller('matches')
@@ -8,9 +9,9 @@ export class MatchesController {
   constructor(private readonly matchesService: MatchesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all matches' })
-  findAll() {
-    return this.matchesService.findAll();
+  @ApiOperation({ summary: 'Get all matches with filtering and pagination' })
+  findAll(@Query() query: MatchFilterDto) {
+    return this.matchesService.findAll(query);
   }
 
   @Get('upcoming')

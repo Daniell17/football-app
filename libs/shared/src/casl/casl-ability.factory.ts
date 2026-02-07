@@ -8,7 +8,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { User, UserRole } from '@prisma/client';
 
-export type Subjects = 'Match' | 'Ticket' | 'News' | 'Player' | 'User' | 'all';
+export type Subjects = 'Match' | 'Ticket' | 'News' | 'Player' | 'User' | 'Payment' | 'all';
 
 export type AppAbility = PureAbility<[string, Subjects]>;
 
@@ -24,6 +24,7 @@ export class CaslAbilityFactory {
       
       can('update', 'User', { id: user.id });
       can('read', 'Ticket', { userId: user.id });
+      can('read', 'Payment', { userId: user.id });
       
       cannot('manage', 'Match');
       cannot('manage', 'News');
@@ -31,7 +32,8 @@ export class CaslAbilityFactory {
     }
 
     return build({
-      detectSubjectType: (item: any) => item.__typename || item.constructor?.name,
+      detectSubjectType: (item: Record<string, unknown>) => 
+        (item.__typename || (item.constructor as { name: string }).name) as ExtractSubjectType<Subjects>,
     });
   }
 }

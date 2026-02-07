@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService, UserSelect } from '@app/shared';
+import { PrismaService, UserSelect, PaginatedResponse, buildPrismaQuery, getPaginationMeta, SafeUser } from '@app/shared';
+import { Prisma, User } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserFilterDto } from './dto/user-filter.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,11 +15,32 @@ export class UsersService {
     });
   }
 
-  async findAll() {
-    return this.prisma.user.findMany({
-      select: UserSelect,
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(query: UserFilterDto): Promise<PaginatedResponse<SafeUser>> {
+    const { role, isActive, ...paginationQuery } = query;
+    
+    // Define entity-specific filters
+    const filters: Prisma.UserWhereInput = {};
+    if (role) filters.role = role;
+    if (isActive !== undefined) filters.isActive = isActive;
+
+    const prismaQuery = buildPrismaQuery(
+      paginationQuery,
+      ['email', 'firstName', 'lastName'], // Searchable fields
+      filters
+    );
+
+    const [data, total] = await Promise.all([
+      this.prisma.user.findMany({
+        ...prismaQuery,
+        select: UserSelect,
+      }),
+      this.prisma.user.count({ where: prismaQuery.where }),
+    ]);
+
+    return {
+      data,
+      meta: getPaginationMeta(total, query.page || 1, query.limit || 10),
+    };
   }
 
   async findOne(id: string) {

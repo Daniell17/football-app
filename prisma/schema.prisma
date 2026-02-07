@@ -51,6 +51,7 @@ model User {
   tickets          Ticket[]
   sessions         Session[]
   auditLogs        AuditLog[]
+  payments         Payment[]
 }
 
 model Session {
@@ -129,21 +130,70 @@ model Ticket {
   matchId   String
   quantity  Int      @default(1)
   totalPaid Float
-  status    TicketStatus @default(PAID)
+  status    TicketStatus @default(PENDING)
+
+  // Payment tracking
+  paymentId     String?
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod String?       @default("paysera")
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user      User  @relation(fields: [userId], references: [id])
-  match     Match @relation(fields: [matchId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  match     Match    @relation(fields: [matchId], references: [id])
+  payment   Payment? @relation(fields: [paymentId], references: [id])
 
   @@index([userId])
   @@index([matchId])
+  @@index([paymentId])
 }
 
 enum TicketStatus {
+  PENDING
   PAID
   CANCELLED
   REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+/* =====================
+   PAYMENTS
+   ===================== */
+model Payment {
+  id                String        @id @default(uuid())
+  orderId           String        @unique
+  amount            Float
+  currency          String        @default("EUR")
+  status            PaymentStatus @default(PENDING)
+  paymentMethod     String        @default("paysera")
+  
+  // Paysera specific
+  payseraProjectId  String?
+  payseraData       String?       // Encoded payment data
+  payseraSignature  String?
+  
+  // Metadata
+  userId            String
+  metadata          Json?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  completedAt       DateTime?
+
+  user              User          @relation(fields: [userId], references: [id])
+  tickets           Ticket[]
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([status])
 }
 
 /* =====================

@@ -1,6 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { HashingService, TokenService, MfaService, PasswordBreachService, MailService } from '@app/shared';
 import { UsersService } from '../users/users.service';
+import { User } from '@prisma/client';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +31,7 @@ export class AuthService {
     return this.tokenService.revokeRefreshToken(userId);
   }
 
-  async validateUser(email: string, pass: string): Promise<any> {
+  async validateUser(email: string, pass: string): Promise<Omit<User, 'password' | 'refreshToken'> | null> {
     const user = await this.usersService.findByEmail(email);
     if (user && (await this.hashingService.compare(pass, user.password))) {
       // Remove sensitive data
@@ -39,7 +41,7 @@ export class AuthService {
     return null;
   }
 
-  async login(user: any, ip?: string, ua?: string) {
+  async login(user: User | Omit<User, 'password' | 'refreshToken'>, ip?: string, ua?: string) {
     const tokens = await this.tokenService.generateTokens(user, ip, ua);
     return {
       ...tokens,
@@ -57,7 +59,7 @@ export class AuthService {
     return this.tokenService.refreshTokens(refreshToken);
   }
 
-  async register(createUserDto: any) {
+  async register(createUserDto: CreateUserDto) {
     await this.passwordBreachService.checkPassword(createUserDto.password);
     const hashedPassword = await this.hashingService.hash(createUserDto.password);
     return this.usersService.create({

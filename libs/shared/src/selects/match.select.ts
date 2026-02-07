@@ -10,6 +10,7 @@ export const MatchSelect = {
   awayScore: true,
   ticketPrice: true,
   totalTickets: true,
+  ticketsSold: true,
   createdAt: true,
   updatedAt: true,
 };

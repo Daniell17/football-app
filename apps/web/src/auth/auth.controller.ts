@@ -4,6 +4,8 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard, GetUser, RefreshDto, VerifyMfaDto, AuthRateLimitGuard } from '@app/shared';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { User } from '@prisma/client';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -37,7 +39,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout and revoke refresh token' })
-  async logout(@GetUser() user: any) {
+  async logout(@GetUser() user: User) {
     return this.authService.logout(user.id);
   }
 
@@ -45,7 +47,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate MFA secret and QR code' })
-  async setupMfa(@GetUser() user: any) {
+  async setupMfa(@GetUser() user: User) {
     return this.authService.generateMfaSecret(user.id, user.email);
   }
 
@@ -53,7 +55,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Verify MFA token and enable MFA' })
-  async verifyMfa(@GetUser() user: any, @Body() verifyMfaDto: VerifyMfaDto) {
+  async verifyMfa(@GetUser() user: User, @Body() verifyMfaDto: VerifyMfaDto) {
     return this.authService.verifyMfa(user.id, verifyMfaDto.token);
   }
 
@@ -61,7 +63,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  getProfile(@GetUser() user: any) {
+  getProfile(@GetUser() user: User) {
     return user;
   }
 
@@ -75,7 +77,7 @@ export class AuthController {
   @Post('reset-password')
   @UseGuards(AuthRateLimitGuard)
   @ApiOperation({ summary: 'Reset password with token' })
-  async resetPassword(@Body() body: any) {
+  async resetPassword(@Body() body: ResetPasswordDto) {
     return this.authService.resetPassword(body.token, body.password);
   }
 }

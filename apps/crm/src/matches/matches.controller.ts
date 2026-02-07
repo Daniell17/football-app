@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { CreateMatchDto } from './dto/create-match.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
+import { MatchFilterDto } from './dto/match-filter.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@app/shared';
 
@@ -19,9 +20,9 @@ export class MatchesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all matches' })
-  findAll() {
-    return this.matchesService.findAll();
+  @ApiOperation({ summary: 'Get all matches with filtering and pagination' })
+  findAll(@Query() query: MatchFilterDto) {
+    return this.matchesService.findAll(query);
   }
 
   @Get(':id')

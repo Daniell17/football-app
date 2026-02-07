@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserFilterDto } from './dto/user-filter.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard, RolesGuard, Roles, PoliciesGuard, CheckPolicies } from '@app/shared';
 import { UserRole } from '@prisma/client';
@@ -22,9 +23,9 @@ export class UsersController {
 
   @Get()
   @CheckPolicies((ability) => ability.can('read', 'User'))
-  @ApiOperation({ summary: 'Get all users' })
-  findAll() {
-    return this.usersService.findAll();
+  @ApiOperation({ summary: 'Get all users with filtering and pagination' })
+  findAll(@Query() query: UserFilterDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

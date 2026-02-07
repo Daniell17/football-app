@@ -9,6 +9,7 @@ import { MfaService } from './security/services/mfa.service';
 import { MailService } from './services/mail.service';
 import { PasswordBreachService } from './security/services/password-breach.service';
 import { RateLimiterService } from './security/services/rate-limiter.service';
+import { PaymentService } from './payment/payment.service';
 
 @Global()
 @Module({
@@ -25,11 +26,10 @@ import { RateLimiterService } from './security/services/rate-limiter.service';
     TokenService,
     CaslAbilityFactory,
     MfaService,
-    CaslAbilityFactory,
-    MfaService,
     PasswordBreachService,
     RateLimiterService,
     MailService,
+    PaymentService,
   ],
   exports: [
     SharedService,
@@ -41,6 +41,7 @@ import { RateLimiterService } from './security/services/rate-limiter.service';
     PasswordBreachService,
     RateLimiterService,
     MailService,
+    PaymentService,
   ],
 })
 export class SharedModule {}

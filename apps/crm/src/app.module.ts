@@ -12,6 +12,8 @@ import { ContactModule } from './contact/contact.module';
 import { HistoryModule } from './history/history.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { SearchModule } from './common/search/search.module';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { AuditLogInterceptor, SessionGuard } from '@app/shared';
 
@@ -33,6 +35,8 @@ import { AuditLogInterceptor, SessionGuard } from '@app/shared';
     HistoryModule,
     UsersModule,
     AuthModule,
+    AnalyticsModule,
+    SearchModule,
   ],
   providers: [
     {

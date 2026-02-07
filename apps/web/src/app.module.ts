@@ -9,6 +9,7 @@ import { ContactModule } from './contact/contact.module';
 import { HistoryModule } from './history/history.module';
 import { AuthModule } from './auth/auth.module';
 import { TicketsModule } from './tickets/tickets.module';
+import { SearchModule } from './common/search/search.module';
 import { JwtModule } from '@nestjs/jwt';
 
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
@@ -29,6 +30,7 @@ import { AuditLogInterceptor, SessionGuard } from '@app/shared';
     HistoryModule,
     AuthModule,
     TicketsModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [
